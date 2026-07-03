@@ -765,6 +765,7 @@ async def on_button_click(self, interaction: discord.Interaction):
 | **ActionRow Allocation Ceilings** | Enforces caps of 5 interactive Button configurations OR 1 independent Dropdown menu set exclusively. |
 | **MediaGallery Volumes Constraints** | Galleries can house up to a maximum volume of 10 image indexes. |
 | **No Mix-and-Match Processing** | Components V2 layouts cannot be combined or dispatched together with classic Embed layers inside the same payload message execution context. |
+
 **Tip:** Always test your layouts in a development server first. Discord sometimes updates component rendering behavior, and layouts that look fine in one Discord client version may appear slightly different in another.
 
 ---
