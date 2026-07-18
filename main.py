@@ -1,9 +1,10 @@
 import os
+import sys
 import discord
 from discord import ui
 from discord.ext import commands
 
-BOT_TOKEN: str = "YOUR-BOT-TOKEN"
+BOT_TOKEN: str = "YOUR_BOT_TOKEN"
 COMMAND_PREFIX: str = "!"
 BANNER_FILENAME = "1000371960.jpg"
 
@@ -16,33 +17,30 @@ class SendView(ui.LayoutView):
         super().__init__(timeout=120)
         self.author = author
 
-        container = ui.Container(accent_color=None)  # Tạo Container + xoá viền bên trái
+        container = ui.Container(accent_color=None)  # Tạo Container + xoá viền dọc
         
         # Ảnh Banner
         banner_gallery = ui.MediaGallery()
         banner_gallery.add_item(media=f"attachment://{BANNER_FILENAME}")
         container.add_item(banner_gallery)  # Nạp ảnh vào Container
         
-        container.add_item(ui.Separator())  # Chèn đường kẻ ngang
+        container.add_item(ui.Separator())  # Chèn đường kẻ
         
         # Tiêu đề
         container.add_item(ui.TextDisplay("## Components V2 Test"))
-        container.add_item(ui.Separator())  # Chèn đường kẻ ngang
+        container.add_item(ui.Separator())  # Chèn đường kẻ
         
-        # YouTube button
-        youtube_button = ui.Button(label="Link", style=discord.ButtonStyle.link, url="https://youtube.com/@your-channel")
-        youtube_section = ui.Section(ui.TextDisplay("[YouTube](https://youtube.com/@your-channel)"), accessory=youtube_button)
-        container.add_item(youtube_section)
+        # Tạo khay chứa button
+        action_row = ui.ActionRow(
+            ui.Button(label="Server", style=discord.ButtonStyle.link, url="https://discord.gg/your-invite"),
+            ui.Button(label="YouTube", style=discord.ButtonStyle.link, url="https://youtube.com/@your-channel")
+        )
+        container.add_item(action_row)  # Nạp khay chứa button vào Container
         
-        # Server button
-        server_button = ui.Button(label="Link", style=discord.ButtonStyle.link, url="https://discord.gg/your-invite")
-        server_section = ui.Section(ui.TextDisplay("[Server Support](https://discord.gg/your-invite)"), accessory=server_button)
-        container.add_item(server_section)
-        
-        container.add_item(ui.Separator())  # Chèn đường kẻ ngang
+        container.add_item(ui.Separator())  # Chèn đường kẻ
         container.add_item(ui.TextDisplay("Tải File"))
         
-        # 5. File đính kèm của người dùng
+        # 5. File đính kèm của user
         file_component = ui.File(media=f"attachment://{user_filename}")
         container.add_item(file_component)
         
@@ -81,7 +79,19 @@ async def send_command(ctx: commands.Context, channel: discord.TextChannel) -> N
 @send_command.error
 async def send_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("**Instructions:** `!send <#channel>` (and remember to attach the file to this message!)")
+        await ctx.send("**Tutorials:** `!send <#channel>` (and remember to attach the file to this message!)")
         
 
-bot.run(BOT_TOKEN)
+if __name__ == "__main__":
+    if BOT_TOKEN == "YOUR_BOT_TOKEN" or not BOT_TOKEN:
+        print("[!] ERROR: Token trống hoặc chưa cấu hình!")
+        sys.exit(1)
+        
+    try:
+        bot.run(BOT_TOKEN)
+    except discord.errors.LoginFailure:
+        print("[!] ERROR: Token không hợp lệ!")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\n[!] Bot đã dừng!")
+        
