@@ -770,5 +770,10 @@ async def on_button_click(self, interaction: discord.Interaction):
 
 ---
 
+# Support Server
+https://discord.gg/8fTGEVGtFM
+
+---
+
 # Author
 Lino
