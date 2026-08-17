@@ -4,93 +4,135 @@ import discord
 from discord import ui
 from discord.ext import commands
 
-BOT_TOKEN: str = "YOUR_BOT_TOKEN"
-COMMAND_PREFIX: str = "!"
+TOKEN = "YOUR_BOT_TOKEN"
+PREFIX = "$"
 BANNER_FILENAME = "1000371960.jpg"
 
-gateway_intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=gateway_intents, help_command=None)
+intents = discord.Intents.all()
+bot = commands.Bot(
+    command_prefix=PREFIX,
+    intents=intents,
+    help_command=None
+)
 
 
 class SendView(ui.LayoutView):
-    def __init__(self, author: discord.Member, user_filename: str) -> None:
-        super().__init__(timeout=120)
-        self.author = author
+    def __init__(self, user_filename: str):
+        super().__init__(timeout=None)
 
-        container = ui.Container(accent_color=None)  # Tạo Container + xoá viền dọc
-        
-        # Ảnh Banner
-        banner_gallery = ui.MediaGallery()
-        banner_gallery.add_item(media=f"attachment://{BANNER_FILENAME}")
-        container.add_item(banner_gallery)  # Nạp ảnh vào Container
-        
-        container.add_item(ui.Separator())  # Chèn đường kẻ
-        
-        # Tiêu đề
+        container = ui.Container()
+
+        # Banner
+        banner = ui.MediaGallery()
+        banner.add_item(media=f"attachment://{BANNER_FILENAME}")
+        container.add_item(banner)
+
+        container.add_item(ui.Separator())
+
+        # Header
         container.add_item(ui.TextDisplay("## Components V2 Test"))
-        container.add_item(ui.Separator())  # Chèn đường kẻ
-        
-        # Tạo khay chứa button
-        action_row = ui.ActionRow(
-            ui.Button(label="Server", style=discord.ButtonStyle.link, url="https://discord.gg/your-invite"),
-            ui.Button(label="YouTube", style=discord.ButtonStyle.link, url="https://youtube.com/@your-channel")
+        container.add_item(ui.Separator())
+
+        # Link buttons
+        container.add_item(ui.ActionRow(
+            ui.Button(
+                label="Server",
+                style=discord.ButtonStyle.link,
+                url="https://discord.gg/your-invite"
+            ),
+            ui.Button(
+                label="YouTube",
+                style=discord.ButtonStyle.link,
+                url="https://youtube.com/@your-channel"
+            )
+        ))
+
+        container.add_item(ui.Separator())
+
+        # Uploaded file
+        container.add_item(ui.TextDisplay("### Download File"))
+        container.add_item(
+            ui.File(media=f"attachment://{user_filename}")
         )
-        container.add_item(action_row)  # Nạp khay chứa button vào Container
-        
-        container.add_item(ui.Separator())  # Chèn đường kẻ
-        container.add_item(ui.TextDisplay("Tải File"))
-        
-        # 5. File đính kèm của user
-        file_component = ui.File(media=f"attachment://{user_filename}")
-        container.add_item(file_component)
-        
+
         self.add_item(container)
-        
+
+
+class Bot(commands.Bot):
+    async def on_ready(self):
+        print("=" * 50)
+        print(f"[+] Logged in as {self.user} | ID: {self.user.id}")
+        print("=" * 50)
+
+
+bot = Bot(
+    command_prefix=PREFIX,
+    intents=intents,
+    help_command=None
+)
+
 
 @bot.command(name="send")
-async def send_command(ctx: commands.Context, channel: discord.TextChannel) -> None:
-    # Kiểm tra file đính kèm
+async def send_command(
+    ctx: commands.Context,
+    channel: discord.TextChannel
+):
+    # Check for an uploaded file
     if not ctx.message.attachments:
         await ctx.send("❌ Please attach a file to this command message!")
         return
-        
-    # Kiểm tra file ảnh banner
-    if not os.path.exists(BANNER_FILENAME):
-        await ctx.send(f"❌ Missing banner image file `{BANNER_FILENAME}` in bot folder!")
+
+    # Check for the banner
+    if not os.path.isfile(BANNER_FILENAME):
+        await ctx.send(
+            f"❌ Missing banner image `{BANNER_FILENAME}` in the bot folder!"
+        )
         return
 
-    # Lấy file từ tin nhắn của user
-    user_attachment = ctx.message.attachments[0]
-    user_file = await user_attachment.to_file()
-    
-    # Lấy file ảnh banner
-    banner_file = discord.File(BANNER_FILENAME, filename=BANNER_FILENAME)
-    
-    # Tạo View với tên file của user
-    view = SendView(author=ctx.author, user_filename=user_attachment.filename)
-    
-    # Gửi sang kênh đã tag
-    await channel.send(view=view, files=[banner_file, user_file])
-    
-    await ctx.send(f"✅ Component sent to {channel.mention}!", delete_after=5)
-    # await ctx.message.delete()
-    
+    attachment = ctx.message.attachments[0]
+
+    # Prepare the files
+    user_file = await attachment.to_file()
+    banner_file = discord.File(
+        BANNER_FILENAME,
+        filename=BANNER_FILENAME
+    )
+
+    view = SendView(attachment.filename)
+
+    # Send the Components V2 message
+    await channel.send(
+        view=view,
+        files=[banner_file, user_file]
+    )
+
+    await ctx.send(
+        f"✅ Component sent to {channel.mention}!",
+        delete_after=5
+    )
+
 
 @send_command.error
-async def send_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
+async def send_command_error(
+    ctx: commands.Context,
+    error: commands.CommandError
+):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("**Tutorials:** `!send <#channel>` (and remember to attach the file to this message!)")
-        
+        await ctx.send(
+            "**Usage:** `$send <#channel>`\n"
+            "Attach a file to this command message!"
+        )
+
 
 if __name__ == "__main__":
-    if BOT_TOKEN == "YOUR_BOT_TOKEN" or not BOT_TOKEN:
-        print("[!] ERROR: Token is empty or not configured!")
+    if not TOKEN or TOKEN == "YOUR_BOT_TOKEN":
+        print("[!] Bot token is not configured!")
         sys.exit(1)
-        
+
     try:
-        bot.run(BOT_TOKEN)
-    except discord.errors.LoginFailure:
-        print("[!] ERROR: Invalid token!")
+        bot.run(TOKEN)
+    except discord.LoginFailure:
+        print("[!] Invalid bot token!")
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n[!] Bot stopped!")
